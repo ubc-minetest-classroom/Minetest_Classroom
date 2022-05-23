@@ -6,7 +6,7 @@ assert(minetest.features.formspec_version_element, "Minetest 5.1 or later is req
 -- Internationalisaton
 minetest_classroom.S = minetest.get_translator("minetest_classroom")
 minetest_classroom.FS = function(...)
-    return minetest.formspec_escape(minetest_classroom.S(...))
+	return minetest.formspec_escape(minetest_classroom.S(...))
 end
 
 -- Source files
@@ -18,7 +18,7 @@ dofile(minetest.get_modpath("mc_teacher") .. "/actions.lua")
 
 -- Privileges
 minetest.register_privilege("teacher", {
-    give_to_singleplayer = false
+	give_to_singleplayer = false
 })
 
 -- Hooks needed to make api.lua testable
@@ -29,16 +29,7 @@ minetest_classroom.check_player_privs = minetest.check_player_privs
 minetest_classroom.load_from(minetest_classroom.classrooms)
 
 function minetest_classroom.save()
-    minetest_classroom.save_to(minetest_classroom.classrooms)
+	minetest_classroom.save_to(minetest_classroom.classrooms)
 end
 
 minetest.register_on_shutdown(minetest_classroom.save)
-
-schematicManager.registerSchematicPath("vancouver_osm", minetest.get_modpath("mc_teacher") .. "/maps/vancouver_osm")
-schematicManager.registerSchematicPath("MKRF512_all", minetest.get_modpath("mc_teacher") .. "/maps/MKRF512_all")
-schematicManager.registerSchematicPath("MKRF512_aspect", minetest.get_modpath("mc_teacher") .. "/maps/MKRF512_aspect")
-schematicManager.registerSchematicPath("MKRF512_dtm", minetest.get_modpath("mc_teacher") .. "/maps/MKRF512_dtm")
-schematicManager.registerSchematicPath("MKRF512_hillshade", minetest.get_modpath("mc_teacher") .. "/maps/MKRF512_hillshade")
-schematicManager.registerSchematicPath("MKRF512_slope", minetest.get_modpath("mc_teacher") .. "/maps/MKRF512_slope")
-schematicManager.registerSchematicPath("MKRF512_tpi", minetest.get_modpath("mc_teacher") .. "/maps/MKRF512_tpi")
-

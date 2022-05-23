@@ -39,7 +39,7 @@ minetest.register_on_leaveplayer(function(player)
 end)
 
 -- Define the Report formspec
-local mc_student_report =
+local mc_student_report = 
 		"formspec_version[5]"..
 		"size[7,7]"..
 		"label[1.8,0.8;What are you reporting?]"..
@@ -56,18 +56,18 @@ end
 -- Define the Coordinates formspec
 local function show_coordinates(player)
 	local pname = player:get_player_name()
-	mc_student_coordinates =
+	mc_student_coordinates = 
 		"formspec_version[5]"..
 		"size[15,10]"..
 		"label[6.3,0.5;Coordinates Stored]"
-
+		
 	-- Get the stored coordinates for the player
 	local pmeta = player:get_meta()
 	pdata = minetest.deserialize(pmeta:get_string("coordinates"))
 	if pdata == nil then
 		-- No coordinates stored, so return an empty list element
-		mc_student_coordinates =
-		mc_student_coordinates..
+		mc_student_coordinates = 
+		mc_student_coordinates.. 
 		"textlist[0.3,1;14.4,7.5;;No Coordinates Stored;1;false]"
 	else
 		mc_student_coordinates = mc_student_coordinates .. "textlist[0.3,1;14.4,7.5;;"
@@ -94,11 +94,11 @@ local function record_coordinates(player,message)
 		local pname = player:get_player_name()
 		pmeta = player:get_meta()
 		local pos = player:get_pos()
-		local temp = minetest.deserialize(pmeta:get_string("coordinates"))
+		temp = minetest.deserialize(pmeta:get_string("coordinates"))
 		if temp == nil then
 			datanew = {
-				coords = {"x="..math.floor(pos.x).." z="..math.floor(pos.y).." y="..math.floor(pos.z), },
-				notes = { message, },
+				coords = {"x="..math.floor(pos.x).." z="..math.floor(pos.y).." y="..math.floor(pos.z), }, 
+				notes = { message, }, 
 			}
 		else
 			table.insert(temp.coords, "x="..math.floor(pos.x).." z="..math.floor(pos.y).." y="..math.floor(pos.z))
@@ -130,7 +130,7 @@ local function show_accesscode(player)
 	end
 end
 
-local mc_student_accesscode_fail =
+local mc_student_accesscode_fail = 
 		"formspec_version[5]"..
 		"size[5,4.2]"..
 		"label[0.6,0.5;Enter Your Access Code]"..
@@ -139,7 +139,7 @@ local mc_student_accesscode_fail =
 		"label[0.9,3.2;Invalid access code.]"..
 		"label[1.2,3.7;Please try again.]"..
 		"button_exit[4.4,0;0.6,0.5;exit;X]"
-
+		
 local function show_accesscode_fail(player)
 	if check_perm(player) then
 		local pname = player:get_player_name()
@@ -171,12 +171,12 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	if string.sub(formname, 1, 10) ~= "mc_student" then
 		return false
 	end
-
+	
 	local wait = os.clock()
 	while os.clock() - wait < 0.05 do end --popups don't work without this
 
 	-- Menu
-	if formname == "mc_student:menu" then
+	if formname == "mc_student:menu" then 
                 if fields.spawn then
                         -- TODO: dynamically extract the static spawn point from the minetest.conf file
                         -- local cmeta = Settings(minetest.get_modpath("mc_teacher").."/maps/"..map..".conf")
@@ -188,9 +188,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
                                 y = 92,
                                 z = 1083,
                         }
-					local spawnRealm = mc_worldManager.GetSpawnRealm()
-					local spawn_pos = spawnRealm.SpawnPoint
-					player:set_pos(spawn_pos)
+                        player:set_pos(spawn_pos)
                 elseif fields.report then
 			show_report(player)
 		elseif fields.coordinates then
@@ -215,7 +213,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		-- Checking for nil (caused by player pressing escape instead of Back) ensures the game does not crash
 		elseif fields.report ~= " " and fields.report ~= nil then
 			local pname = player:get_player_name()
-
+			
 			-- Count the number of words, by counting for replaced spaces
 			-- Number of spaces = Number of words - 1
 			local _, count = string.gsub(fields.report, " ", "")
@@ -240,7 +238,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			for teacher in pairs(minetest_classroom.mc_students.teachers) do
 				minetest.chat_send_player(teacher, minetest.colorize("#FF00FF", msg))
 			end
-
+			
 			-- Archive the report in mod storage
 			local key = pname.." "..tostring(os.date("%d-%m-%Y %H:%M:%S"))
 			minetest_classroom.reports:set_string(key, minetest.write_json(fields.report))
@@ -250,7 +248,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			minetest.chat_send_player(player:get_player_name(),minetest.colorize("#FF0000","Error: Please add a message to your report."))
 		end
 	end
-
+	
 	if formname == "mc_student:marker" then
 		if fields.back then
 			show_student_menu(player)
@@ -260,7 +258,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			return true
 		end
 	end
-
+	
 	if formname == "mc_student:coordinates" then
 		if fields.back then
 			show_student_menu(player)
@@ -272,16 +270,16 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			show_coordinates(player)
 		end
 	end
-
+	
 	if formname == "mc_student:accesscode" or formname == "mc_student:accesscode_fail" then
 		if fields.exit then
 			return
 		end
-
+		
 		local pname = player:get_player_name()
-
+		
 		-- Get the classrooms from modstorage
-		local temp = minetest.deserialize(minetest_classroom.classrooms:get_string("classrooms"))
+		temp = minetest.deserialize(minetest_classroom.classrooms:get_string("classrooms"))
 		-- Get the classroom accesscodes
 		loc = check_access_code(fields.accesscode,temp.access_code)
 		if loc then
@@ -324,17 +322,13 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 					end_day = pdata.end_day,
 				}
 			end
-
+			
 			-- Check if the access code is expired
 			if tonumber(mdata.end_year[loc]) < tonumber(os.date("%Y")) and months[mdata.end_month[loc]] < tonumber(os.date("%m")) and tonumber(mdata.end_day[loc]) < tonumber(os.date("%d")) then
 				minetest.chat_send_player(pname,pname..": The access code you entered has expired. Please contact your instructor.")
 			else
 				-- Send the student to the classroom spawn pos
-
-				local realmSpawnPosition = Realm.realmDict[mdata.realm_id[loc]].SpawnPoint
-
-
-				player:set_pos(realmSpawnPosition)
+				player:set_pos(mdata.spawn_pos[loc])
 			end
 		else
 			show_accesscode_fail(player)
@@ -419,7 +413,7 @@ function add_marker(pname, message, pos, owner)
 		})
 	end
 end
-
+	
 function markers.add(pname, msg, pos)
 
 	if markers[pname] then
@@ -522,7 +516,7 @@ function place_marker(player,message)
 			true, false
 		))
 		local pointed = ray:next()
-
+		
 		if message == "" then
 			message = "Look here!"
 		end
