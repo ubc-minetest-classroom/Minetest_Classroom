@@ -205,26 +205,6 @@ local function show_tutorial_menu(player)
 	end
 end
 
--- The tutorial book for accessing tutorials
-minetest.register_tool("mc_student:tutorialbook" , {
-	description = "Tutorial book",
-	inventory_image = "tutorial_book.png",
-	-- Left-click the tool activates the tutorial menu
-	on_use = function (itemstack, user, pointed_thing)
-        local pname = user:get_player_name()
-		-- Check for shout privileges
-		if mc_helpers.checkPrivs(user,priv_table) then
-			show_tutorial_menu(user)
-		end
-	end,
-	-- Destroy the book on_drop to keep things tidy
-	on_drop = function(itemstack, dropper, pos)
-	end,
-})
-
-minetest.register_alias("tutorialbook", "mc_student:tutorialbook")
-tutorialbook = minetest.registered_aliases[tutorialbook] or tutorialbook
-
 mc_student_mov = {
 	"formspec_version[5]",
 	"size[13,10]",
@@ -281,20 +261,11 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	while os.clock() - wait < 0.05 do end --popups don't work without this
 
 	-- Menu
-	if formname == "mc_student:menu" then 
-                if fields.spawn then
-                        -- TODO: dynamically extract the static spawn point from the minetest.conf file
-                        -- local cmeta = Settings(minetest.get_modpath("mc_teacher").."/maps/"..map..".conf")
-                        -- local spawn_pos_x = tonumber(cmeta:get("spawn_pos_x"))
-                        -- local spawn_pos_y = tonumber(cmeta:get("spawn_pos_y"))
-                        -- local spawn_pos_z = tonumber(cmeta:get("spawn_pos_z"))
-                        local spawn_pos = {
-                                x = 1426,
-                                y = 92,
-                                z = 1083,
-                        }
-                        player:set_pos(spawn_pos)
-                elseif fields.report then
+	if formname == "mc_student:menu" then
+		if fields.spawn then
+			local spawnRealm = mc_worldManager.GetSpawnRealm()
+			spawnRealm:TeleportPlayer(player)
+        elseif fields.report then
 			show_report(player)
 		elseif fields.coordinates then
 			show_coordinates(player)
@@ -506,6 +477,7 @@ end
 minetest.register_tool(tool_name , {
 	description = "Notebook for students",
 	inventory_image = "notebook.png",
+	_mc_tool_privs = priv_table,
 	-- Left-click the tool activates the teacher menu
 	on_use = function (itemstack, player, pointed_thing)
         local pname = player:get_player_name()
@@ -518,86 +490,6 @@ minetest.register_tool(tool_name , {
 	on_drop = function(itemstack, dropper, pos)
 	end,
 })
-
--- Give the notebook and tutorialbook to any player who joins with shout privileges or take them away if they do not have shout
-
--- Tool handling functions:
-    -- Give the notebook to any player who joins with adequate privileges or take away the notebook if they do not have them
-    -- Give the notebook to any player who is granted adequate privileges
-    -- Take the notebook away from anyone who is revoked privileges and no longer has adequate ones
-minetest.register_on_joinplayer(function(player)
-	local inv = player:get_inventory()
-	if inv:contains_item("main", ItemStack(tool_name)) then
-		-- Player has the notebook
-		if mc_helpers.checkPrivs(player,priv_table) then
-			-- The player should have the notebook
-			return
-		else
-			-- The player should not have the notebook
-			player:get_inventory():remove_item('main', tool_name)
-		end
-	else
-		-- Player does not have the notebook
-		if mc_helpers.checkPrivs(player,priv_table) then
-			-- The player should have the notebook
-			player:get_inventory():add_item('main', tool_name)
-		else
-			-- The player should not have the notebook
-			return
-		end
-	end
-
-	-- Keeping as separate statement for now in case we don't want the tutorialbook as its own item
-	if inv:contains_item("main", ItemStack("mc_student:tutorialbook")) then
-		if mc_helpers.checkPrivs(player,priv_table) then
-			return
-		else
-			player:get_inventory():remove_item('main', 'mc_student:tutorialbook')
-		end
-	else
-		if mc_helpers.checkPrivs(player,priv_table) then
-			player:get_inventory():add_item('main', 'mc_student:tutorialbook')
-		else
-			return
-		end
-	end
-end)
-
--- Give the notebook to any player who is granted adequate privileges
-minetest.register_on_priv_grant(function(name, granter, priv)
-    -- Check if priv has an effect on the privileges needed for the tool
-    if name == nil or not table.has(priv_table, priv) or not minetest.get_player_by_name(name) then
-        return true -- skip this callback, continue to next callback
-    end
-
-    local player = minetest.get_player_by_name(name)
-    local inv = player:get_inventory()
-
-    if (not inv:contains_item("main", ItemStack(tool_name))) and mc_helpers.checkPrivs(player,priv_table) then
-        -- Give the player the tool
-        player:get_inventory():add_item('main', tool_name)
-    end
-
-    return true -- continue to next callback
-end)
-
--- Take the notebook away from anyone who is revoked privileges and no longer has adequate ones
-minetest.register_on_priv_revoke(function(name, revoker, priv)
-    -- Check if priv has an effect on the privileges needed for the tool
-    if name == nil or not table.has(priv_table, priv) or not minetest.get_player_by_name(name) then
-        return true -- skip this callback, continue to next callback
-    end
-
-    local player = minetest.get_player_by_name(name)
-    local inv = player:get_inventory()
-	
-    if inv:contains_item("main", ItemStack(tool_name)) and (not mc_helpers.checkPrivs(player,priv_table)) then
-        -- Take the tool away from the player
-        player:get_inventory():remove_item('main', tool_name)
-    end
-
-    return true -- continue to next callback
-end)
 
 -- Functions and variables for placing markers
 hud = mhud.init()

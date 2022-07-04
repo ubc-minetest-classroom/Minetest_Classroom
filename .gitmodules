@@ -1,3 +1,6 @@
 [submodule "mods/UBC_Campus_Minetest_Map"]
 	path = mods/UBC_Campus_Minetest_Map
-	url = git@github.com:pauldpickell/UBC_Campus_Minetest_Map.git
+	url = https://github.com/pauldpickell/UBC_Campus_Minetest_Map.git
+[submodule "mods/areas"]
+	path = mods/areas
+	url = https://github.com/ubc-minetest-classroom/areas.git

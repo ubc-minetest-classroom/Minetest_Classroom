@@ -21,6 +21,9 @@ dofile(minetest.get_modpath("mc_worldmanager") .. "/realm/realmDataManagement.lu
 dofile(minetest.get_modpath("mc_worldmanager") .. "/realm/realmSchematicSaveLoad.lua")
 dofile(minetest.get_modpath("mc_worldmanager") .. "/realm/realmPlayerManagement.lua")
 dofile(minetest.get_modpath("mc_worldmanager") .. "/realm/realmCoordinateConversion.lua")
+if (areas) then
+    dofile(minetest.get_modpath("mc_worldmanager") .. "/realm/realmAreasIntegration.lua")
+end
 
 ---@public
 ---The constructor for the realm class.
@@ -48,6 +51,9 @@ function Realm:New(name, area)
         MetaStorage = {}
     }
 
+    setmetatable(this, self)
+    Realm.realmDict[this.ID] = this
+
     Realm.realmCount = this.ID
 
     local gridStartPos, gridEndPos = Realm.CalculateStartEndPosition(area)
@@ -62,8 +68,11 @@ function Realm:New(name, area)
                         y = (this.StartPos.y + 2),
                         z = (this.StartPos.z + this.EndPos.z) / 2 }
 
-    setmetatable(this, self)
-    Realm.realmDict[this.ID] = this
+    if (areas) then
+        local protectionID = areas:add("Server", this.ID .. this.Name, this.StartPos, this.EndPos)
+        this:set_string("protectionID", protectionID)
+        areas:save()
+    end
 
     Realm.SaveDataToStorage()
 
@@ -179,7 +188,6 @@ function Realm.CalculateStartEndPosition(areaInBlocks)
     return StartPos, EndPos
 end
 
-
 function Realm.markSpaceAsFree(startPos, endPos)
     local entry = {}
     entry.startPos = startPos
@@ -210,81 +218,83 @@ function Realm.consolidateEmptySpace()
     end
 
     -- Run a nearest neighbor search to group points up according to their neighbors
-    -- Note that this function uses GOTO statements; the alternative would be to have a boolean
-    -- Keeping track of when to break the loops.
-    -- This is necessary because of our nested loops.
     local function buildGroups(pointGrid)
+
+        local function isNeighbor(lastPos, currentPos, coord)
+            local difference = math.abs(currentPos - lastPos)
+            if (difference == 0 or difference == 1) then
+                return true
+            end
+            return false
+        end
 
         local groups = {}
         local groupCounter = 0
 
-        :: start ::
-        local lastX = nil
-        local lastY = nil
-        local lastZ = nil
+        local repeatFlag = false
 
-        local function isNeighbor(lastPos, currentPos, coord)
+        while (repeatFlag) do
+            repeatFlag = false
+            local lastX = nil
+            local lastY = nil
+            local lastZ = nil
 
-            local difference = math.abs(currentPos - lastPos)
-
-            if (difference == 0 or difference == 1) then
-                return true
-            end
-
-            return false
-        end
-
-        for kx, xTable in mc_helpers.pairsByKeys(pointGrid) do
-            if (lastX == nil) then
-                lastX = kx
-            end
-
-            lastY = nil
-            lastZ = nil
-
-            if (isNeighbor(lastX, kx, "x")) then
-                lastX = kx
-            else
-                groupCounter = groupCounter + 1
-
-                goto start
-                break
-            end
-
-            for ky, yTable in mc_helpers.pairsByKeys(xTable) do
-                if (lastY == nil) then
-                    lastY = ky
+            for kx, xTable in mc_helpers.pairsByKeys(pointGrid) do
+                if (lastX == nil) then
+                    lastX = kx
                 end
 
-                if (isNeighbor(lastY, ky, "y")) then
-                    lastY = ky
-                else
+                lastY = nil
+                lastZ = nil
 
+                if (isNeighbor(lastX, kx, "x")) then
+                    lastX = kx
+                else
+                    groupCounter = groupCounter + 1
+
+                    -- Alternative of GOTO is a while loop with a boolean flag
+                    repeatFlag = true
                     break
                 end
 
-                for kz, zTable in mc_helpers.pairsByKeys(yTable) do
-                    if (lastZ == nil) then
-                        lastZ = kz
-                    end
-
-                    if (isNeighbor(lastZ, kz, "z")) then
-                        lastZ = kz
-                    else
-
-                        break
-                    end
-
-                    local coords = { x = kx, y = ky, z = kz }
-
-                    if (zTable == true) then
-                        if (groups[groupCounter] == nil) then
-                            groups[groupCounter] = {}
+                if (repeatFlag == false) then
+                    for ky, yTable in mc_helpers.pairsByKeys(xTable) do
+                        if (lastY == nil) then
+                            lastY = ky
                         end
 
-                        table.insert(groups[groupCounter], coords)
-                        ptable.delete(pointGrid, coords)
+                        if (isNeighbor(lastY, ky, "y")) then
+                            lastY = ky
+                        else
+
+                            break
+                        end
+
+                        for kz, zTable in mc_helpers.pairsByKeys(yTable) do
+                            if (lastZ == nil) then
+                                lastZ = kz
+                            end
+
+                            if (isNeighbor(lastZ, kz, "z")) then
+                                lastZ = kz
+                            else
+
+                                break
+                            end
+
+                            local coords = { x = kx, y = ky, z = kz }
+
+                            if (zTable == true) then
+                                if (groups[groupCounter] == nil) then
+                                    groups[groupCounter] = {}
+                                end
+
+                                table.insert(groups[groupCounter], coords)
+                                ptable.delete(pointGrid, coords)
+                            end
+                        end
                     end
+
                 end
             end
         end
@@ -364,6 +374,14 @@ end
 function Realm:Delete()
     self:RunFunctionFromTable(self.RealmDeleteTable)
     self:ClearNodes()
+
+    if (areas) then
+        local protectionID = self:get_string("protectionID")
+        if (protectionID ~= nil) then
+            areas:remove(protectionID, true)
+            areas:save()
+        end
+    end
 
     local gridSpace = Realm.worldToGridSpace({
         x = self.StartPos.x,

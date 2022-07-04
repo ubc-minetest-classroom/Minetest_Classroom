@@ -2,31 +2,6 @@ local closed_HUD_showing, open_HUD_showing = false, false
 local mag_declination, azimuth, curr_azimuth = 0, 0, 0
 local curr_needle, curr_bezel = "needle_0.png", "bezel_0.png"
 
--- Give the compass to any player who joins with adequate privileges or take it away if they do not have them
-minetest.register_on_joinplayer(function(player)
-    local inv = player:get_inventory()
-    if inv:contains_item("main", ItemStack("forestry_tools:compass")) then
-        -- Player has the compass
-        if check_perm(player) then
-            -- The player should have the compass
-            return
-        else   
-            -- The player should not have the compass
-            player:get_inventory():remove_item('main', "forestry_tools:compass")
-        end
-    else
-        -- Player does not have the compass
-        if check_perm(player) then
-            -- The player should have the compass
-            player:get_inventory():add_item('main', "forestry_tools:compass")
-        else
-            -- The player should not have the compass
-            return
-        end     
-    end
-end)
-
-
 ---------------------------
 --- FORMSPEC MANAGEMENT ---
 ---------------------------
@@ -253,10 +228,6 @@ minetest.register_tool("forestry_tools:compass" , {
 		minetest.set_node(pos, {name="air"})
 	end,
 })
-
-minetest.register_alias("compass", "forestry_tools:compass")
-compass = minetest.registered_aliases[compass] or compass
-
 
 minetest.register_globalstep(function(dtime)
 	local players  = minetest.get_connected_players()

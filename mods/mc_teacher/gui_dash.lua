@@ -899,6 +899,7 @@ months = {
 minetest.register_tool(tool_name, {
     description = "Controller for teachers",
     inventory_image = "controller.png",
+    _mc_tool_privs = priv_table,
     -- Left-click the tool activates the teacher menu
     on_use = function(itemstack, player, pointed_thing)
         local pname = player:get_player_name()
@@ -911,66 +912,3 @@ minetest.register_tool(tool_name, {
     on_drop = function(itemstack, dropper, pos)
     end,
 })
-
--- Tool handling functions:
-    -- Give the controller to any player who joins with adequate privileges or take away the controller if they do not have them
-    -- Give the controller to any player who is granted adequate privileges
-    -- Take the controller away from anyone who is revoked privileges and no longer has adequate ones
-
--- Give the controller to any player who joins with adequate privileges or take away the controller if they do not have them
-minetest.register_on_joinplayer(function(player)
-    local inv = player:get_inventory()
-    if inv:contains_item("main", ItemStack(tool_name)) then
-        -- Player has the controller
-        if mc_helpers.checkPrivs(player,priv_table) then
-            -- The player should have the controller
-            return
-        else
-            -- The player should not have the controller
-            player:get_inventory():remove_item('main', tool_name)
-        end
-    else
-        -- Player does not have the controller
-        if mc_helpers.checkPrivs(player,priv_table) then
-            -- The player should have the controller
-            player:get_inventory():add_item('main', tool_name)
-        else
-            -- The player should not have the controller
-            return
-        end
-    end
-end)
-
--- Give the controller to any player who is granted adequate privileges
-minetest.register_on_priv_grant(function(name, granter, priv)
-    -- Check if priv has an effect on the privileges needed for the tool
-    if name == nil or not table.has(priv_table, priv) or not minetest.get_player_by_name(name) then
-        return true -- skip this callback, continue to next callback
-    end
-
-    local player = minetest.get_player_by_name(name)
-    local inv = player:get_inventory()
-
-    if (not inv:contains_item("main", ItemStack(tool_name))) and mc_helpers.checkPrivs(player,priv_table) then
-        player:get_inventory():add_item('main', tool_name)
-    end
-
-    return true -- continue to next callback
-end)
-
--- Take the controller away from anyone who is revoked privileges and no longer has adequate ones
-minetest.register_on_priv_revoke(function(name, revoker, priv)
-    -- Check if priv has an effect on the privileges needed for the tool
-    if name == nil or not table.has(priv_table, priv) or not minetest.get_player_by_name(name) then
-        return true -- skip this callback, continue to next callback
-    end
-
-    local player = minetest.get_player_by_name(name)
-    local inv = player:get_inventory()
-	
-    if inv:contains_item("main", ItemStack(tool_name)) and (not mc_helpers.checkPrivs(player,priv_table)) then
-        player:get_inventory():remove_item('main', tool_name)
-    end
-
-    return true -- continue to next callback
-end)

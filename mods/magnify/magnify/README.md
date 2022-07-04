@@ -72,7 +72,7 @@ Returns the reference key associated with `node` in the `magnify` plant database
 
 #### `magnify.get_species_from_ref(ref)  -->  table, table`
 
-Returns information about the species indexed at `ref` in the `magnify` plant database
+Returns the plant definition table the species indexed at `ref` in the `magnify` plant database, and a list of nodes the species is associated with
 
 - Parameters:
   - `ref` (*`string`*): Reference key of the plant species
@@ -82,12 +82,14 @@ Returns information about the species indexed at `ref` in the `magnify` plant da
   *OR*
   - `nil` if `ref` is invalid
 
-#### `magnify.get_all_registered_species()  -->  table`
+#### `magnify.get_all_registered_species()  -->  table, table`
 
-Returns a human-readable list of all species registered in the `magnify` plant database
+Returns a human-readable list of all species registered in the `magnify` plant database, and a list of reference keys corresponding to them  
+Each species and its corresponding reference key will be at the same index in both lists
 
 - Returns:
-  - *`table`*: Names of all registered plant species, formatted as "#0: Common name (Scientific name)"
+  - *`table`*: Names of all registered plant species, formatted as "Common name (Scientific name)"
+  - *`table`*: Reference keys for all registered plant species, in the same order as the list of names
 
 #### `magnify.build_formspec_from_ref(ref, is_exit, is_inv)  -->  string, string`
 

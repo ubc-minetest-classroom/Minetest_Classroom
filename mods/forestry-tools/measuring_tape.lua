@@ -84,20 +84,6 @@ function mark_pos1(player, pos)
 	end
 end
 
-
--- Hud displaying distance between player and pos1
-local hud = mhud.init()
-local function create_hud(player, pos)
-	hud:add(player, "measuring_tape:current_distance", {
-		hud_elem_type = "waypoint",
-		name = "Distance: ",
-		text = "m",
-		world_pos = instances[player].pos1,
-		color = 0x000000
-	})
-end
-
-
 -- Helper for laying tape between pos1 and pos2
 local function changePos(pos, plane, change, player)
 	local newPos
@@ -122,99 +108,45 @@ function mark_pos2(player, pos)
 	minetest.swap_node(pos, {name = "forestry_tools:measure_pos2"})
 	tell_player(player, "End position marked")
 	instances[player].mark_status = pos2_set
-	hud:remove_all()
 	
 	-- Calculate the distance and display output
 	distance = math.floor(vector.distance(instances[player].pos1, instances[player].pos2) + 0.5)
 
+	-- If the distance is within range, lay the tape between the start and end points
 	if distance > range then
 		tell_player(player, "Out of range! Maximum distance is 30m")
-		return
-	end
-	
-	local newPos
-	local direction_change
-
-	if pos.x == instances[player].pos1.x then
-		if pos.y == instances[player].pos1.y then
-			direction_change = "z"
-		elseif pos.z == instances[player].pos1.z then
-			direction_change = "y"
-		else
-			direction_change = "yz"
-		end
-	elseif pos.y == instances[player].pos1.y then
-		if pos.z == instances[player].pos1.z then
-			direction_change = "x"
-		else
-			direction_change = "xz"
-		end
 	else
-		direction_change = "xy"
-	end
-
-	if #direction_change == 1 then
+		local newPos
 		for i = 1, distance - 1 do
-			if direction_change == "x" then
-				newPos = changePos(pos, "x", i, player)
-			elseif direction_change == "y" then
-				newPos = changePos(pos, "y", i, player)
-			else
-				newPos = changePos(pos, "z", i, player)
-			end
-
-			instances[player].tape_nodes[i] = newPos
-			instances[player].orig_nodes[i] = minetest.get_node(newPos)
-			minetest.swap_node(newPos, {name = "forestry_tools:measure_pos1"})
-		end
-	else 
-		for i = 1, distance - 2 do
-			if direction_change == "xy" then
+			if pos.x == instances[player].pos1.x then
+				if pos.y == instances[player].pos1.y then
+					newPos = changePos(pos, "z", i, player)
+				elseif pos.z == instances[player].pos1.z then
+					newPos = changePos(pos, "y", i, player)
+				else
+					newPos = changePos(pos, "y", i, player)
+					newPos = changePos(newPos, "z", i, player)
+				end
+			elseif pos.y == instances[player].pos1.y then
+				if pos.z == instances[player].pos1.z then
+					newPos = changePos(pos, "x", i, player)
+				else
+					newPos = changePos(pos, "x", i, player)
+					newPos = changePos(newPos, "z", i, player)
+				end
+			else 
 				newPos = changePos(pos, "x", i, player)
 				newPos = changePos(newPos, "y", i, player)
-			elseif direction_change == "yz" then
-				newPos = changePos(pos, "y", i, player)
-				newPos = changePos(newPos, "z", i, player)
-			else
-				newPos = changePos(pos, "x", i, player)
-				newPos = changePos(newPos, "z", i, player)
 			end
+
 
 			instances[player].tape_nodes[i] = newPos
 			instances[player].orig_nodes[i] = minetest.get_node(newPos)
 			minetest.swap_node(newPos, {name = "forestry_tools:measure_pos1"})
 		end
+
+		tell_player(player, "Distance: " .. minetest.colorize("#FFFF00", distance) .. "m")
 	end
-
-	-- for i = 1, distance - 1 do
-	-- 	if pos.x == instances[player].pos1.x then
-	-- 		if pos.y == instances[player].pos1.y then
-	-- 			newPos = changePos(pos, "z", i, player)
-	-- 		elseif pos.z == instances[player].pos1.z then
-	-- 			newPos = changePos(pos, "y", i, player)
-	-- 		else
-	-- 			newPos = changePos(pos, "y", i, player)
-	-- 			newPos = changePos(newPos, "z", i, player)
-	-- 		end
-	-- 	elseif pos.y == instances[player].pos1.y then
-	-- 		if pos.z == instances[player].pos1.z then
-	-- 			newPos = changePos(pos, "x", i, player)
-	-- 		else
-	-- 			newPos = changePos(pos, "x", i, player)
-	-- 			newPos = changePos(newPos, "z", i, player)
-	-- 		end
-	-- 	else 
-	-- 		newPos = changePos(pos, "x", i, player)
-	-- 		newPos = changePos(newPos, "y", i, player)
-	-- 	end
-
-
-	-- 	instances[player].tape_nodes[i] = newPos
-	-- 	instances[player].orig_nodes[i] = minetest.get_node(newPos)
-	-- 	minetest.swap_node(newPos, {name = "forestry_tools:measure_pos1"})
-	-- end
-
-	tell_player(player, "Distance: " .. minetest.colorize("#FFFF00", distance) .. "m")
 end
 
 -- Prevents premature auto-reset
@@ -228,7 +160,7 @@ function reset_check(player)
 	end
 end
 
--- Resets tape; replaces marker nodes with the old nodes
+-- Resets pos1 and pos2; replaces marker nodes with the old nodes
 function reset(player)
 	if instances[player].mark_status == none_set then
 		return
@@ -240,27 +172,22 @@ function reset(player)
 		minetest.swap_node(instances[player].pos1, instances[player].node1)
 		minetest.swap_node(instances[player].pos2, instances[player].node2)
 
-		if instances[player].tape_nodes[1] ~= nil and instances[player].orig_nodes[1] ~= nil then
+		if instances[player].tape_nodes[2] ~= nil and instances[player].orig_nodes[2] ~= nil then
 			for i = 1, distance - 1 do
-				if instances[player].tape_nodes[i] then
-					minetest.swap_node(instances[player].tape_nodes[i], instances[player].orig_nodes[i])
-				end
+				minetest.swap_node(instances[player].tape_nodes[i], instances[player].orig_nodes[i])
 			end
 		end
 	end
 		
 	instances[player].mark_status = none_set
 	
-	if hud then
-		hud:remove_all()
-	end
 	
 	if minetest.get_player_by_name(player) then
 		tell_player(player, "Tape has been reset")
 	end
 end
 
--- Convenience method which just calls minetest.chat_send_player() after prefixing msg with "Measuring Tape - "
+-- Convenience method which just calls minetest.chat_send_player() after prefixing msg with " -!- Measuring Tape: "
 function tell_player(player_name, msg)
 	minetest.chat_send_player(player_name, "Measuring Tape - " .. msg)	
 end
@@ -286,7 +213,6 @@ minetest.register_tool("forestry_tools:measuringTape" , {
 			-- If pos1 not marked, mark pos1
 			if instances[placer].mark_status == none_set then
 				mark_pos1(placer, pointed_thing.under)
-				create_hud(placer, pointed_thing.under)
 			
 			-- If pos1 marked, mark pos2 perform calculations, and trigger auto-reset
 			elseif instances[placer].mark_status == pos1_set then
@@ -305,8 +231,5 @@ minetest.register_tool("forestry_tools:measuringTape" , {
 
 minetest.register_alias("measuringTape", "forestry_tools:measuringTape")
 measuringTape = minetest.registered_aliases[measuringTape] or measuringTape
-
-
-
 
 

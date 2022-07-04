@@ -94,6 +94,7 @@ end
 minetest.register_tool("mc_tf:tutorialbook" , {
 	description = "Tutorial book",
 	inventory_image = "tutorial_book.png",
+	_mc_tool_privs = { shout = true },
 	-- Left-click the tool activates the tutorial menu
 	on_use = function (itemstack, user, pointed_thing)
         local pname = user:get_player_name()
@@ -144,6 +145,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	end
 end)
 
+--[[ handled in mc_toolhandler
 -- Give the tutorialbook to any player who joins with shout privileges or take them away if they do not have shout
 minetest.register_on_joinplayer(function(player)
 	local inv = player:get_inventory()
@@ -161,6 +163,7 @@ minetest.register_on_joinplayer(function(player)
 		end
 	end
 end)
+]]
 
 --    END TUTORIAL FUNCTIONS    --
 ----------------------------------

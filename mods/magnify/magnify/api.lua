@@ -1,49 +1,21 @@
 -- EXPORTED MAGNIFY FUNCTIONS
 magnify = {}
 
--- Instantiate unique time code for plant updates
---local prev_date_str = magnify_plants:get_string("reg_time_old")
---magnify_plants:set_string("reg_time_old", prev_date_str)
---local date_str = os.date("%Y%m%d%H%M%S-V1", os.time())
---magnify_plants:set_string("reg_time", date_str)
-
 --- @public
 --- Registers a plant species in the `magnify` plant database
 --- @param def_table Plant species definition table
 --- @param nodes Table of stringified nodes the species corresponds to in the MineTest world
 --- @see README.md > API > Registration
-function magnify.register_plant(def_table, nodes) 
-    local ref = magnify_plants:get_int("count")
+function magnify.register_plant(def_table, nodes)
+    local ref = magnify_plants:get("count") or 1
     local serial_table = minetest.serialize(def_table)
     magnify_plants:set_string("ref_"..ref, serial_table)
 
-    --local key_table = {key = "ref_"..ref, reg_time = date_str}
-    --local serial_ref = minetest.serialize(key_table)
     for k,v in pairs(nodes) do
         magnify_plants:set_string("node_"..v, "ref_"..ref)
     end
 
     magnify_plants:set_int("count", ref + 1)
-end
-
---- @public
---- Returns a human-readable list of all species registered in the magnify plant database
---- @return table
-function magnify.get_all_registered_species()
-    local storage_data = magnify_plants:to_table()
-    local output = {}
-    for k,v in pairs(storage_data.fields) do
-        if string.sub(k, 1, 4) == "ref_" then
-            local info = minetest.deserialize(v)
-            if info then
-                local ref_num = string.sub(k, 5)
-                local name_string = "###" .. ref_num .. ": " .. info.com_name .. " (" .. info.sci_name .. ")" -- if changed, update get_species_ref in mc_teacher/gui_dash.lua
-                table.insert(output, name_string)
-            end
-        end
-    end
-    table.sort(output, mc_helpers.numSubstringCompare)
-    return output
 end
 
 --- @public
@@ -104,7 +76,7 @@ function magnify.clear_nodes(nodes)
 end
 
 --- @public
---- Returns information about the species indexed at `ref` in the `magnify` plant database
+--- Returns the plant definition table the species indexed at `ref` in the `magnify` plant database, and a list of nodes the species is associated with
 --- @param ref Reference key of the plant species
 --- @return table, table or nil
 function magnify.get_species_from_ref(ref)
@@ -126,6 +98,60 @@ function magnify.get_species_from_ref(ref)
     else
         return nil
     end
+end
+
+--- @private
+--- Sorting comparison function for registered plant species
+--- Sorts by common name, then scientific name, in alphabetical order
+--- Fallbacks:
+--- If both ref_a and ref_b are invalid, returns ref_a < ref_b (default sort)
+--- If exactly one of ref_a and ref_b is invalid, returns whether ref_a is valid or not
+--- @param ref_a Reference key of the first species to be sorted
+--- @param ref_b Reference key of the second species to be sorted
+--- @return boolean
+local function species_compare(ref_a, ref_b)
+    local species_a = magnify.get_species_from_ref(ref_a)
+    local species_b = magnify.get_species_from_ref(ref_b)
+    if species_a and species_b then
+        if species_a.com_name ~= species_b.com_name then
+            return species_a.com_name < species_b.com_name
+        else
+            return species_a.sci_name < species_b.sci_name
+        end
+    elseif not species_a and not species_b then
+        return ref_a < ref_b
+    else
+        return species_a or false
+    end
+end
+
+--- @public
+--- Returns a human-readable list of all species registered in the `magnify` plant database, and a list of reference keys corresponding to them
+--- Each species and its corresponding reference key will be at the same index in both lists
+--- @return table, table
+function magnify.get_all_registered_species()
+    local storage_data = magnify_plants:to_table()
+    local raw_name_table = {}
+    local ref_keys = {}
+
+    for k,v in pairs(storage_data.fields) do
+        if string.sub(k, 1, 4) == "ref_" then
+            local info = minetest.deserialize(v)
+            if info then
+                --local ref_num = string.sub(k, 5)
+                raw_name_table[k]  = info.com_name .. " (" .. info.sci_name .. ")"
+                table.insert(ref_keys, k)
+            end
+        end
+    end
+
+    local name_table = {}
+    table.sort(ref_keys, species_compare)
+    for i,k in ipairs(ref_keys) do
+        name_table[i] = raw_name_table[k]
+    end
+
+    return name_table, ref_keys
 end
 
 --- @public

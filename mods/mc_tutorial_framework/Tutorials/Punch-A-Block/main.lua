@@ -63,7 +63,7 @@ function punchABlock.progress(player)
         if (level == nil) then
             mc_tutorialFramework.infoWindow.show_to(player, "Congratulations! You finished the tutorial")
             minetest.chat_send_player(player:get_player_name(), "Congratulations! You finished the tutorial")
-            punchABlock.endTutorial(nil, player)
+            punchABlock.endTutorial(Realm.realmDict[pmeta:get_int("realm")], player)
         else
             if (level.welcomeText ~= nil) then
                 mc_tutorialFramework.infoWindow.show_to(player, level.welcomeText)
@@ -82,6 +82,10 @@ end
 function punchABlock.startTutorial(realm, player)
     punchABlock.removeHUD(player)
     local pmeta = player:get_meta()
+
+    if (areas) then
+        realm:AddPlayerArea(player)
+    end
 
     mc_tutorialFramework.infoWindow.show_to(player, "Welcome to the punch-a-block tutorial." ..
             "This tutorial aims to teach you how to destroy blocks (called nodes)." ..
@@ -106,6 +110,11 @@ function punchABlock.startTutorial(realm, player)
 end
 
 function punchABlock.endTutorial(realm, player)
+
+    if (areas) then
+        realm:RemovePlayerArea(player)
+    end
+
     local pmeta = player:get_meta()
 
     -- Clear that we're in a tutorial
