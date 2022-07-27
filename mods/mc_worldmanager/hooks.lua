@@ -1,3 +1,16 @@
+local function makePlayerImmortal(player)
+    local groups = player:get_armor_groups() or {}
+    groups["immortal"] = 1
+    player:set_armor_groups(groups)
+end
+
+local function makePlayerMortal(player)
+    local groups = player:get_armor_groups() or {}
+    groups["immortal"] = 0
+    player:set_armor_groups(groups)
+end
+
+
 -- on first player spawn, we assign them to the world spawn realm
 -- and set their position to that spawnpoint .
 minetest.register_on_newplayer(function(player)
@@ -6,6 +19,8 @@ minetest.register_on_newplayer(function(player)
     pmeta:set_int("realm", spawnRealm.ID)
     pmeta:set_string("universalPrivs", minetest.serialize(minetest.get_player_privs(player:get_player_name())))
     spawnRealm:TeleportPlayer(player)
+
+    makePlayerImmortal(player)
 end)
 
 -- When players respawn, we teleport them to the spawnpoint of the realm they belong to
@@ -18,6 +33,7 @@ minetest.register_on_respawnplayer(function(player)
         player:set_pos(mc_worldManager.GetSpawnRealm().SpawnPoint)
     end
 
+    makePlayerImmortal(player)
     return true
 end)
 
@@ -84,6 +100,7 @@ minetest.register_globalstep(function(deltaTime)
 
             if (not realm:ContainsCoordinate(pos)) then
                 table.insert(mc_worldManager.outOfBoundPlayers, player:get_player_name())
+                makePlayerMortal(player)
             end
         end
     end
@@ -114,6 +131,7 @@ minetest.register_globalstep(function(deltaTime)
 
             if (realm:ContainsCoordinate(pos)) then
                 table.remove(mc_worldManager.outOfBoundPlayers, id)
+                makePlayerImmortal(player)
                 return
             end
 
