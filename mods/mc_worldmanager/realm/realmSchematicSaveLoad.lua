@@ -94,11 +94,21 @@ end
 ---@return boolean whether the schematic fit entirely in the realm when loading.
 function Realm:Load_Schematic(schematic, config)
 
+
+    local schematicStartPos = self:LocalToWorldPosition(config.startOffset)
+
     --TODO: Add code to check if the realm is large enough to support the schematic; If not, create a new realm that can;
     local schematicEndPos = self:LocalToWorldSpace(config.schematicSize)
 
+
+    local schematicEndPos = self:LocalToWorldPosition(config.schematicSize)
     if (schematicEndPos.x > self.EndPos.x or schematicEndPos.y > self.EndPos.y or schematicEndPos.z > self.EndPos.z) then
-        Debug.log("Schematic is too large for realm")
+
+        Debug.log("Schematic is too large for realm, creating a new realm with the same name but larger size")
+
+        local realm = Realm:New(self.Name, schematicEndPos, true)
+        self:Delete()
+        self = realm
     else
         if (schematicEndPos.x == nil or schematicEndPos == 0) then
             schematicEndPos.x = 80
@@ -124,9 +134,11 @@ function Realm:Load_Schematic(schematic, config)
 
 
 
+
+
     --exschem is having issues loading random chunks, need to debug
     if (config.format == "exschem") then
-        exschem.load(self.StartPos, self.StartPos, 0, {}, schematic, 0,
+        exschem.load(schematicStartPos, schematicStartPos, 0, {}, schematic, 0,
                 function(id, time, errcode, err)
                     Debug.log("Loading " .. id .. time)
 
@@ -152,19 +164,19 @@ function Realm:Load_Schematic(schematic, config)
         end
 
         local decompressed = mc_helpers.decompress(data)
-        worldedit.deserialize(self.StartPos, decompressed)
+        worldedit.deserialize(schematicStartPos, decompressed)
     elseif (config.format == "procedural") then
         -- do nothing if we're a procedural map; it will be taking care of by the onSchematicPlaceFunction
     else
         -- Read data into LVM
         local vm = minetest.get_voxel_manip()
-        local emin, emax = vm:read_from_map(self.StartPos, self.EndPos)
+        local emin, emax = vm:read_from_map(schematicStartPos, self.EndPos)
         local a = VoxelArea:new {
             MinEdge = emin,
             MaxEdge = emax
         }
 
-        minetest.place_schematic_on_vmanip(vm, self.StartPos, schematic .. ".mts", 0, nil, true)
+        minetest.place_schematic_on_vmanip(vm, schematicStartPos, schematic .. ".mts", 0, nil, true)
         vm:write_to_map(true)
     end
 

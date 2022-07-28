@@ -78,6 +78,15 @@ function schematicManager.getSchematic(key)
     local realm_create_function_name = settings:get("realm_create_function_name") or nil
     local realm_delete_function_name = settings:get("realm_delete_function_name") or nil
 
+
+    local offset_x = tonumber(settings:get("offset_x")) or 0
+    local offset_y = tonumber(settings:get("offset_y")) or 0
+    local offset_z = tonumber(settings:get("offset_z")) or 0
+
+
+
+  
+   
     local utm_zone = tonumber(settings:get("utm_zone") or 1)
     local utm_hemisphere = settings:get("utm_hemisphere") or "N"
     local utm_origin_easting = tonumber(settings:get("utm_origin_easting")) or 0
@@ -85,11 +94,12 @@ function schematicManager.getSchematic(key)
 
     local _spawnPoint = { x = spawn_pos_x, y = spawn_pos_y, z = spawn_pos_z }
     local _schematicSize = { x = schematic_size_x, y = schematic_size_y, z = schematic_size_z }
+    local _startOffset = { x = offset_x, y = offset_y, z = offset_z }
     local _utmInfo = { zone = utm_zone, utm_is_north = (utm_hemisphere == "n" or utm_hemisphere == "N"), easting = utm_origin_easting, northing = utm_origin_northing }
 
     local config = { author = _author, name = _name, format = _format, spawnPoint = _spawnPoint, schematicSize = _schematicSize,
                      tableName = schematic_table_name, onTeleportInFunction = teleport_function_in_name, onTeleportOutFunction = teleport_function_out_name,
-                     onSchematicPlaceFunction = realm_create_function_name, onRealmDeleteFunction = realm_delete_function_name, utmInfo = _utmInfo }
+                     onSchematicPlaceFunction = realm_create_function_name, onRealmDeleteFunction = realm_delete_function_name, utmInfo = _utmInfo, startOffset = _startOffset }
 
     return schematic, config
 end

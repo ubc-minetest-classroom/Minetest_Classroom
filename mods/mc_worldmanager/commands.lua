@@ -595,6 +595,22 @@ commands["blocks"] = {
 
 }
 
+
+
+commands["clean"] = {
+    func = function(name, params)
+        local realmID = tonumber(params[1])
+        local requestedRealm = Realm.GetRealm(realmID)
+        if (requestedRealm == nil) then
+            return false, "Requested realm of ID: " .. tostring(realmID) .. " does not exist."
+        end
+
+        requestedRealm:Clean()
+        return true, "cleaned realm " .. tostring(realmID)
+    end,
+    help = "realm clean <realmID> -- replaces any unknown block with air."
+}
+
 commands["coordinates"] = {
     func = function(name, params)
         local operation = tostring(params[1])
@@ -677,6 +693,7 @@ commands["data"] = {
     end,
     help = "realm data <get | set> <realmID> <dataName> <dataValue>"
 }
+
 
 minetest.register_chatcommand("realm", {
     params = "Subcommand Realm ID Option",
