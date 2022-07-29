@@ -160,6 +160,20 @@ function mc_helpers.deepCopy(table)
     return copy
 end
 
+---@public
+---Returns the name of the first inventory list that contains the given item, nil if the item was not found
+---@param inv inventory to check
+---@param itemstack Item to search for
+---@return string
+function mc_helpers.getInventoryItemLocation(inv, itemstack)
+    for list,_ in pairs(inv:get_lists()) do
+        if inv:contains_item(list, itemstack) then
+            return list
+        end
+    end
+    return nil
+end
+
 function mc_helpers.round(x, n)
     return tonumber(string.format("%." .. n .. "f", x))
 end

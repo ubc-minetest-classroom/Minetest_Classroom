@@ -198,7 +198,6 @@ minetest.register_tool("forestry_tools:compass" , {
 	inventory_image = "compass_icon.png",
     stack_max = 1,
 	liquids_pointable = true,
-	_mc_tool_privs = forestry_tools.priv_table,
 
 	-- On left-click
     on_use = function(itemstack, player, pointed_thing)
@@ -236,6 +235,10 @@ minetest.register_tool("forestry_tools:compass" , {
 	on_drop = function (itemstack, dropper, pos)
 	end,
 })
+
+if minetest.get_modpath("mc_toolhandler") then
+	mc_toolhandler.register_tool_manager("forestry_tools:compass", {privs = forestry_tools.priv_table})
+end
 
 minetest.register_globalstep(function(dtime)
 	local players  = minetest.get_connected_players()

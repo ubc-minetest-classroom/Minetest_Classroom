@@ -5,10 +5,13 @@ local S = forestry_tools.S
     description = S("Wedge Prism"),
     wield_image = "wedgeprism.jpg",
     inventory_image = "wedgeprism.jpg",
-	_mc_tool_privs = forestry_tools.priv_table,
 	on_drop = function(itemstack, dropper, pos)
 	end,
 })
+
+if minetest.get_modpath("mc_toolhandler") then
+	mc_toolhandler.register_tool_manager("forestry_tools:wedgeprism", {privs = forestry_tools.priv_table})
+end
 
 
 minetest.register_privilege("alwayszoom", {})

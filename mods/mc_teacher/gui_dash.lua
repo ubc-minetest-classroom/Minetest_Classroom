@@ -928,7 +928,6 @@ months = {
 minetest.register_tool(tool_name, {
     description = "Controller for teachers",
     inventory_image = "controller.png",
-    _mc_tool_privs = priv_table,
     -- Left-click the tool activates the teacher menu
     on_use = function(itemstack, player, pointed_thing)
         local pname = player:get_player_name()
@@ -941,3 +940,6 @@ minetest.register_tool(tool_name, {
     on_drop = function(itemstack, dropper, pos)
     end,
 })
+if minetest.get_modpath("mc_toolhandler") then
+    mc_toolhandler.register_tool_manager(tool_name, {privs = priv_table})
+end

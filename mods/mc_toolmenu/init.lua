@@ -1,11 +1,13 @@
-mc_toolmenu = {}
-mc_toolmenu.inv_storage = minetest.get_mod_storage()
+mc_toolmenu = {
+    path = minetest.get_modpath("mc_toolmenu"),
+    tool_inv = "mc_toolmenu:tools"
+}
 
-sfinv.register_page("mc_toolmenu:tools", {
+sfinv.register_page(mc_toolmenu.tool_inv, {
     title = "Toolbox",
     get = function(self, player, context)
         local pname = player:get_player_name()
-        local box_height = math.ceil(player:get_inventory():get_size("mc_toolmenu:tools")/8) - 4
+        local box_height = math.ceil(player:get_inventory():get_size(mc_toolmenu.tool_inv)/8) - 4
         local scroll_const = 23/20 -- 23/20 = 1.15
         local formtable = {
             "box[-0.28,-0.30;8.35,4.5;#555555]",
@@ -36,21 +38,21 @@ minetest.register_on_joinplayer(function(player)
     local inv = player:get_inventory()
 
     -- register toolbox if not already created
-    if not inv:get_list("mc_toolmenu:tools") then
-        inv:set_list("mc_toolmenu:tools", {})
-        inv:set_size("mc_toolmenu:tools", 32)
+    if not inv:get_list(mc_toolmenu.tool_inv) then
+        inv:set_list(mc_toolmenu.tool_inv, {})
+        inv:set_size(mc_toolmenu.tool_inv, 32)
     end
 end)
 
 minetest.register_allow_player_inventory_action(function(player, action, inventory, inv_info)
     -- initial check
-    list_info = inv_info.listname or (inv_info.to_list == "mc_toolmenu:tools" and inv_info.to_list or inv_info.from_list)
-    if list_info ~= "mc_toolmenu:tools" then
+    local list_info = inv_info.listname or (inv_info.to_list == mc_toolmenu.tool_inv and inv_info.to_list or inv_info.from_list)
+    if list_info ~= mc_toolmenu.tool_inv then
         return -- toolbox not affected, ignore
     end
 
     if action == "move" then
-        if inv_info.to_list == "mc_toolmenu:tools" then
+        if inv_info.to_list == mc_toolmenu.tool_inv then
             -- putting item into toolbox, run checks
             local moving_stack = inventory:get_stack(inv_info.from_list, inv_info.from_index)
             if minetest.registered_tools[moving_stack:get_name()] then 
@@ -61,7 +63,7 @@ minetest.register_allow_player_inventory_action(function(player, action, invento
         else
             return -- no items going into toolbox, ignore
         end
-    elseif action == "put" and inv_info.listname == "mc_toolmenu:tools" then
+    elseif action == "put" and inv_info.listname == mc_toolmenu.tool_inv then
         if minetest.registered_tools[inv_info.stack:get_name()] then 
             return 1 -- allow 1 item (tool) to be put in
         else
@@ -74,16 +76,15 @@ end)
 
 minetest.register_on_player_inventory_action(function(player, action, inventory, inv_info)
     -- initial check
-    list_info = inv_info.listname or (inv_info.to_list == "mc_toolmenu:tools" and inv_info.to_list or inv_info.from_list)
-    if list_info ~= "mc_toolmenu:tools" then
+    local list_info = inv_info.listname or (inv_info.to_list == mc_toolmenu.tool_inv and inv_info.to_list or inv_info.from_list)
+    if list_info ~= mc_toolmenu.tool_inv then
         return -- toolbox not affected, ignore
     end
 
-    if not inventory:room_for_item("mc_toolmenu:tools", ItemStack("default:pick_bronze")) then
+    if not inventory:room_for_item(mc_toolmenu.tool_inv, ItemStack("default:pick_bronze")) then
         -- Increase size of toolbox if it gets full
-        local current_size = inventory:get_size("mc_toolmenu:tools")
-        --local width = inventory:get_width("mc_toolmenu:tools")
-        inventory:set_size("mc_toolmenu:tools", current_size + 8)
+        local current_size = inventory:get_size(mc_toolmenu.tool_inv)
+        inventory:set_size(mc_toolmenu.tool_inv, current_size + 8)
 
         -- refresh inventory formspec
         sfinv.set_player_inventory_formspec(player)

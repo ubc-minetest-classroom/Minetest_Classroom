@@ -1,45 +1,64 @@
 # mc_toolhandler
 
-Provides functionality for giving/taking classroom tools from players.
+Provides functionality for automatically managing player tools based on player privileges.
 
-All tools handled by `mc_toolhandler` will automatically be given to players with adequate usage privileges for them, and automatically be taken away from players who lose the privileges necessary to use them.
-
-## Tool management
-
-### Tool definition fields used by `mc_toolhandler`
-
-`mc_toolhandler` manages tools for all mods specified in the `optional_depends` of its `mod.conf` file. A tool will be managed by `mc_toolhandler` if it contains at least one of the following properties in its tool definition:
-
-- `_mc_tool_privs`: A table of privileges required to use the tool, or an empty table if no priviliges are required to use the tool.
-  - Usage: ```_mc_tool_privs = {interact = true, fly = true}```
-- `_mc_tool_include`: Boolean flag indicating whether `mc_toolhandler` should manage the tool.
-  - If `_mc_tool_include = true` and `_mc_tool_privs` is unspecified, tool usage privileges default to `{teacher = true}`.
-  - If `_mc_tool_include = false`, `mc_toolhander` will not manage the tool.
-
-Additional properties need to be set for groups of similar tools (ex. a tool with changing textures registered as multiple tools):
-
-- `_mc_tool_group`: A group name for the tool, used to detect the presence of the tool instead of the tool name.
-  - Usage: ```_mc_tool_group = "modname:generic_tool_name"```
-
-The following properties are optional:
-
-- `_mc_tool_allow_take`: Boolean flag indicating whether tool can be taken out of the player inventory. If unspecified, treated as `false`.
-
-### Managing tools using `mc_toolhandler`
-
-To add tools to the list of tools handled by `mc_toolhandler`, follow the steps below:
-
-- Add the name of the mod containg the tools you wish to manage (as defined in the mod's `mod.conf` file) to the `optional_depends` line of `mc_toolhandler`'s `mod.conf` file
-  - `optional_depends` is a comma-separated list, so ensure that each mod in the list is separated by a comma
-- Define the `_mc_tool_privs` and/or `_mc_tool_include` fields in the tool definition for each tool you want `mc_toolhandler` to manage, as specified above
-- If applicable, define the `_mc_tool_group` field for any tools that need it as specified above
-- Define optional properties for each tool as specified above, if desired
+All tools handled by `mc_toolhandler` will automatically be given to players with adequate usage privileges for them, and automatically be taken away from players who lose the privileges necessary to use them.  
+Players can only hold one copy of each managed tool in their player inventory at a time.
 
 ## API
 
+### `mc_toolhandler.register_tool_manager(tool, options)  -->  boolean`
+
+Registers `tool` to be managed by `mc_toolhandler`
+
+- Parameters:
+  - `tool` (*`string`*): Name of tool to be managed
+  - `options` (*`table`*): Table of tool options - defaults are given below
+
+  ```lua
+  local options = {
+      privs = {teacher = true},   -- Table of privileges necessary to use the tool
+      allow_take = false          -- Whether the tool is allowed to be taken out of the player inventory or not
+  }
+  ```
+  
+- Usage:
+
+  ```lua
+  mc_toolhandler.register_tool_manager("mod:tool", options)
+  ```
+
+- Returns:
+  - *`boolean`*: `true` if the tool was successfully registered, `false` otherwise
+
+### `mc_toolhandler.register_group_manager(tools, options)  -->  boolean`
+
+Registers a group of similar tools to be managed by `mc_toolhandler` as if they were one tool
+
+- Parameters:
+  - `tools` (*`table`*): Table of itemstrings of tools to be managed
+  - `options` (*`table`*): Table of tool options - defaults are given below
+
+  ```lua
+  local options = {
+      privs = {teacher = true},   -- Table of privileges necessary to use the tool
+      allow_take = false,         -- Whether the tool is allowed to be taken out of the player inventory or not
+      default_tool = tools[1]     -- Group member to treat as the "primary" tool instance and give by default
+  }
+  ```
+  
+- Usage:
+
+  ```lua
+  mc_toolhandler.register_group_manager({"mod:tool", "mod:different_tool", "another_mod:other_tool"}, options)
+  ```
+
+- Returns:
+  - *`boolean`*: `true` if the tool group was successfully registered, `false` otherwise
+
 ### `mc_toolhandler.create_tool_inventory(player)  -->  InvRef, string, string`
 
-Returns a detached inventory containing all tools `player` has the privileges to use, which `player` can freely take copies of as desired.  
+Returns a detached inventory containing all tools `player` has the privileges to use, which `player` can freely take copies of as desired  
 It is recommended to call this every time access to the detached inventory is needed in case player privileges change between uses
 
 - Parameters:

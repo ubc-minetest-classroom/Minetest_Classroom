@@ -240,7 +240,6 @@ minetest.register_tool("forestry_tools:measuringTape" , {
 	inventory_image = "measuring_tape.png",
     stack_max = 1,
 	liquids_pointable = true,
-	_mc_tool_privs = forestry_tools.priv_table,
 
 	-- On left-click
     on_use = function(itemstack, placer, pointed_thing)
@@ -279,4 +278,6 @@ minetest.register_tool("forestry_tools:measuringTape" , {
 minetest.register_alias("measuringTape", "forestry_tools:measuringTape")
 measuringTape = minetest.registered_aliases[measuringTape] or measuringTape
 
-
+if minetest.get_modpath("mc_toolhandler") then
+	mc_toolhandler.register_tool_manager("forestry_tools:measuringTape", {privs = forestry_tools.priv_table})
+end

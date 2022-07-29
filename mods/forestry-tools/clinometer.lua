@@ -76,7 +76,6 @@ minetest.register_tool("forestry_tools:clinometer" , {
 	inventory_image = "clinometer_icon.png",
     stack_max = 1,
 	liquids_pointable = true,
-	_mc_tool_privs = forestry_tools.priv_table,
 
 	-- On left-click
     on_use = function(itemstack, player, pointed_thing)
@@ -91,6 +90,10 @@ minetest.register_tool("forestry_tools:clinometer" , {
 	on_drop = function (itemstack, dropper, pos)
 	end,
 })
+
+if minetest.get_modpath("mc_toolhandler") then
+	mc_toolhandler.register_tool_manager("forestry_tools:clinometer", {privs = forestry_tools.priv_table})
+end
 
 local function update_hud(player, hud, hudname, text) 
 	local newtext
@@ -215,4 +218,3 @@ minetest.register_globalstep(function(dtime)
 		end
 	end
 end)
-

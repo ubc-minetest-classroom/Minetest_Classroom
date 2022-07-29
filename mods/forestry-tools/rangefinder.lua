@@ -756,7 +756,6 @@ end
 minetest.register_tool(TOOL_NAME, {
  	description = "Rangefinder",
  	inventory_image = "rangefinder.jpg",
-    _mc_tool_privs = { interact = true },
  	-- Left-click the tool activate function
  	on_use = function(itemstack, player, pointed_thing)
         local pname = player:get_player_name()
@@ -824,7 +823,11 @@ minetest.register_tool(TOOL_NAME, {
  	on_drop = function(itemstack, dropper, pos)
  	end,
 })
+
 minetest.register_alias("rangefinder", TOOL_NAME)
+if minetest.get_modpath("mc_toolhandler") then
+	mc_toolhandler.register_tool_manager(TOOL_NAME, {privs = forestry_tools.priv_table})
+end
 
 minetest.register_globalstep(function(dtime)
     local online_players = minetest.get_connected_players()
